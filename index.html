@@ -291,7 +291,7 @@
                 <div class="network-badge">🔗 Arbitrum Sepolia</div>
             </div>
 
-            <!-- Network Selector -->
+            <!-- Network Warning -->
             <div id="networkWarning" class="error-message">
                 ⚠️ Vui lòng chuyển sang Arbitrum Sepolia
             </div>
@@ -349,7 +349,7 @@
         // ============ CONSTANTS ============
         const ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
         const ARBITRUM_SEPOLIA_RPC = "https://sepolia-rollup.arbitrum.io/rpc";
-        const CONTRACT_ADDRESS = "0x28d67a8d48DE8654d135E53231B2dEbEaEd7830F";
+        const CONTRACT_ADDRESS = "0xa5a3E794187D524F982E80234b0fa7d8728d14C3"; // ✅ CONTRACT MỚI
         const CLAIM_AMOUNT = ethers.parseEther("0.5"); // 0.5 OSS
         const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // 24 hours
         const STORAGE_KEY = "lastClaimTime_" + CONTRACT_ADDRESS;
@@ -539,7 +539,7 @@
             const countdownBox = document.getElementById("countdownBox");
 
             claimBtn.disabled = false;
-            claimBtn.innerHTML = "��� NHẬN TOKEN (CLAIM)";
+            claimBtn.innerHTML = "✨ NHẬN TOKEN (CLAIM)";
             countdownBox.classList.add("hidden");
             clearInterval(countdownInterval);
         }
@@ -601,8 +601,17 @@
 
                 updateStatus("Đang xử lý...");
 
-                // Call transfer function (owner sends token to user)
-                const tx = await contract.transfer(userAddress, CLAIM_AMOUNT);
+                // Get current gas price with 20% buffer
+                const feeData = await provider.getFeeData();
+                const maxFeePerGas = (feeData.maxFeePerGas * BigInt(120)) / BigInt(100);
+                const maxPriorityFeePerGas = (feeData.maxPriorityFeePerGas * BigInt(120)) / BigInt(100);
+
+                // Call transfer function
+                const tx = await contract.transfer(userAddress, CLAIM_AMOUNT, {
+                    maxFeePerGas: maxFeePerGas,
+                    maxPriorityFeePerGas: maxPriorityFeePerGas,
+                    gasLimit: 150000
+                });
 
                 updateStatus("Đang đợi xác nhận...");
                 claimBtn.innerHTML = '<span class="loading"></span> Đang đợi xác nhận...';
