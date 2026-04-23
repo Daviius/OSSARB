@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSS Mining - Arbitrum Sepolia</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .card {
+            background: rgba(20, 20, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #00ff88;
+            font-size: 2em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .network-badge {
+            display: inline-block;
+            background: rgba(100, 200, 255, 0.1);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            color: #64c8ff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 15px 0;
+        }
+
+        .status-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .status-label {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            word-break: break-all;
+        }
+
+        .reward-info {
+            background: rgba(0, 255, 136, 0.05);
+            border-left: 3px solid #00ff88;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #e0e0e0;
+            font-size: 0.95em;
+        }
+
+        .reward-info strong {
+            color: #00ff88;
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f3ba2f 0%, #ffb800 100%);
+            color: #000;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(243, 186, 47, 0.3);
+        }
+
+        .btn-claim {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+            color: #000;
+            font-size: 1.1em;
+            padding: 18px;
+            margin: 20px 0;
+        }
+
+        .btn-claim:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-claim:disabled {
+            background: linear-gradient(135deg, #555 0%, #333 100%);
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-secondary {
+            background: rgba(100, 200, 255, 0.15);
+            color: #64c8ff;
+            border: 1px solid #64c8ff;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(100, 200, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-disconnect {
+            background: rgba(255, 77, 77, 0.15);
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+            margin-top: 10px;
+        }
+
+        .btn-disconnect:hover {
+            background: rgba(255, 77, 77, 0.25);
+        }
+
+        .button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .countdown {
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 255, 136, 0.2);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .balance-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            color: #e0e0e0;
+            text-align: center;
+        }
+
+        .balance-label {
+            color: #888;
+            font-size: 0.85em;
+        }
+
+        .balance-value {
+            color: #00ff88;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .fee-info {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .error-message {
+            background: rgba(255, 77, 77, 0.15);
+            border: 1px solid #ff4d4d;
+            color: #ff9999;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .button {
+                font-size: 0.9em;
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">⛏️</div>
+                <h1>OSS MINING</h1>
+                <p class="subtitle">Claim Token Hàng Ngày</p>
+                <div class="network-badge">🔗 Arbitrum Sepolia</div>
+            </div>
+
+            <!-- Network Selector -->
+            <div id="networkWarning" class="error-message">
+                ⚠️ Vui lòng chuyển sang Arbitrum Sepolia
+            </div>
+
+            <!-- Status Box -->
+            <div class="status-box">
+                <div class="status-label">Trạng thái ví</div>
+                <div class="status-value" id="statusValue">Chưa kết nối</div>
+            </div>
+
+            <!-- Balance -->
+            <div id="balanceInfo" class="balance-info hidden">
+                <div class="balance-label">Số dư OSS</div>
+                <div class="balance-value" id="balanceValue">0.00</div>
+            </div>
+
+            <!-- Reward Info -->
+            <div class="reward-info">
+                💰 Phần thưởng: <strong>0.5 OSS</strong> / ngày<br>
+                💨 Gas: <strong>~$0.0001</strong>
+            </div>
+
+            <!-- Messages -->
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Countdown -->
+            <div class="countdown hidden" id="countdownBox"></div>
+
+            <!-- Connect Button -->
+            <button id="connectBtn" class="button btn-primary" onclick="connectWallet()">
+                🦊 Kết nối MetaMask
+            </button>
+
+            <!-- Mining UI -->
+            <div id="miningUI" class="hidden">
+                <button id="claimBtn" class="button btn-claim" onclick="claimToken()">
+                    ✨ NHẬN TOKEN (CLAIM)
+                </button>
+                <button id="switchNetworkBtn" class="button btn-secondary hidden" onclick="switchNetwork()">
+                    🔗 Chuyển sang Arbitrum
+                </button>
+                <button class="button btn-disconnect" onclick="disconnectWallet()">
+                    ❌ Ngắt kết nối
+                </button>
+            </div>
+
+            <div class="fee-info">
+                Kết nối ví để bắt đầu claim token
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONSTANTS ============
+        const ARBITRUM_SEPOLIA_CHAIN_ID = 421614;
+        const ARBITRUM_SEPOLIA_RPC = "https://sepolia-rollup.arbitrum.io/rpc";
+        const CONTRACT_ADDRESS = "0x28d67a8d48DE8654d135E53231B2dEbEaEd7830F";
+        const CLAIM_AMOUNT = ethers.parseEther("0.5"); // 0.5 OSS
+        const COOLDOWN_TIME = 24 * 60 * 60 * 1000; // 24 hours
+        const STORAGE_KEY = "lastClaimTime_" + CONTRACT_ADDRESS;
+
+        // ERC20 ABI
+        const ERC20_ABI = [
+            {
+                "constant": false,
+                "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}],
+                "name": "transfer",
+                "outputs": [{"type": "bool"}],
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"type": "uint256"}],
+                "type": "function"
+            }
+        ];
+
+        // ============ STATE VARIABLES ============
+        let provider;
+        let signer;
+        let userAddress;
+        let contract;
+        let countdownInterval;
+
+        // ============ UTILITY FUNCTIONS ============
+
+        function showError(message) {
+            const errorBox = document.getElementById("errorMessage");
+            errorBox.textContent = message;
+            errorBox.classList.add("show");
+            setTimeout(() => errorBox.classList.remove("show"), 5000);
+        }
+
+        function showSuccess(message) {
+            const successBox = document.getElementById("successMessage");
+            successBox.textContent = message;
+            successBox.classList.add("show");
+            setTimeout(() => successBox.classList.remove("show"), 5000);
+        }
+
+        function updateStatus(text) {
+            document.getElementById("statusValue").textContent = text;
+        }
+
+        function formatBalance(balance) {
+            return (parseInt(balance) / 1e18).toFixed(4);
+        }
+
+        // ============ WALLET FUNCTIONS ============
+
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    showError("❌ Vui lòng cài MetaMask!");
+                    return;
+                }
+
+                provider = new ethers.BrowserProvider(window.ethereum);
+                const network = await provider.getNetwork();
+
+                if (Number(network.chainId) !== ARBITRUM_SEPOLIA_CHAIN_ID) {
+                    showError("⚠️ Vui lòng chuyển sang Arbitrum Sepolia");
+                    document.getElementById("switchNetworkBtn").classList.remove("hidden");
+                    return;
+                }
+
+                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                userAddress = accounts[0];
+                signer = await provider.getSigner();
+
+                // Initialize contract
+                contract = new ethers.Contract(CONTRACT_ADDRESS, ERC20_ABI, signer);
+
+                // Update UI
+                updateStatus(userAddress.slice(0, 6) + "..." + userAddress.slice(-4));
+                document.getElementById("connectBtn").classList.add("hidden");
+                document.getElementById("miningUI").classList.remove("hidden");
+                document.getElementById("balanceInfo").classList.remove("hidden");
+                document.getElementById("switchNetworkBtn").classList.add("hidden");
+
+                // Get balance
+                await updateBalance();
+
+                // Check cooldown
+                checkCooldown();
+
+                // Listen for network changes
+                window.ethereum.on("chainChanged", () => {
+                    location.reload();
+                });
+
+                // Listen for account changes
+                window.ethereum.on("accountsChanged", (accounts) => {
+                    if (accounts.length === 0) {
+                        disconnectWallet();
+                    } else {
+                        location.reload();
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+                showError("❌ Lỗi kết nối: " + (error.reason || error.message));
+            }
+        }
+
+        async function switchNetwork() {
+            try {
+                await window.ethereum.request({
+                    method: "wallet_switchEthereumChain",
+                    params: [{ chainId: "0xa4b1" }] // 421614 in hex
+                });
+            } catch (error) {
+                if (error.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: "wallet_addEthereumChain",
+                            params: [{
+                                chainId: "0xa4b1",
+                                chainName: "Arbitrum Sepolia",
+                                rpcUrls: [ARBITRUM_SEPOLIA_RPC],
+                                nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
+                                blockExplorerUrls: ["https://sepolia.arbiscan.io"]
+                            }]
+                        });
+                    } catch (addError) {
+                        showError("❌ Lỗi thêm network");
+                    }
+                }
+            }
+        }
+
+        function disconnectWallet() {
+            provider = null;
+            signer = null;
+            userAddress = null;
+            contract = null;
+            clearInterval(countdownInterval);
+
+            updateStatus("Đã ngắt kết nối");
+            document.getElementById("connectBtn").classList.remove("hidden");
+            document.getElementById("miningUI").classList.add("hidden");
+            document.getElementById("balanceInfo").classList.add("hidden");
+            document.getElementById("countdownBox").classList.add("hidden");
+        }
+
+        // ============ BALANCE FUNCTIONS ============
+
+        async function updateBalance() {
+            try {
+                if (!contract || !userAddress) return;
+                const balance = await contract.balanceOf(userAddress);
+                document.getElementById("balanceValue").textContent = formatBalance(balance) + " OSS";
+            } catch (error) {
+                console.error("Lỗi lấy balance:", error);
+            }
+        }
+
+        // ============ COOLDOWN FUNCTIONS ============
+
+        function checkCooldown() {
+            const lastClaim = localStorage.getItem(STORAGE_KEY);
+            const now = Date.now();
+
+            if (!lastClaim) {
+                enableClaim();
+                return;
+            }
+
+            const timePassed = now - parseInt(lastClaim);
+
+            if (timePassed >= COOLDOWN_TIME) {
+                enableClaim();
+            } else {
+                const timeRemaining = COOLDOWN_TIME - timePassed;
+                disableClaim(timeRemaining);
+            }
+        }
+
+        function enableClaim() {
+            const claimBtn = document.getElementById("claimBtn");
+            const countdownBox = document.getElementById("countdownBox");
+
+            claimBtn.disabled = false;
+            claimBtn.innerHTML = "��� NHẬN TOKEN (CLAIM)";
+            countdownBox.classList.add("hidden");
+            clearInterval(countdownInterval);
+        }
+
+        function disableClaim(timeRemaining) {
+            const claimBtn = document.getElementById("claimBtn");
+            const countdownBox = document.getElementById("countdownBox");
+
+            claimBtn.disabled = true;
+            countdownBox.classList.remove("hidden");
+
+            updateCountdown(timeRemaining);
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                timeRemaining -= 1000;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(countdownInterval);
+                    enableClaim();
+                } else {
+                    updateCountdown(timeRemaining);
+                }
+            }, 1000);
+        }
+
+        function updateCountdown(ms) {
+            const hours = Math.floor(ms / (60 * 60 * 1000));
+            const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+            const seconds = Math.floor((ms % (60 * 1000)) / 1000);
+
+            document.getElementById("countdownBox").innerHTML =
+                `⏱️ Quay lại sau: <strong>${hours}h ${minutes}m ${seconds}s</strong>`;
+        }
+
+        // ============ CLAIM FUNCTION ============
+
+        async function claimToken() {
+            try {
+                if (!contract || !userAddress) {
+                    showError("❌ Vui lòng kết nối ví");
+                    return;
+                }
+
+                // Check cooldown
+                const lastClaim = localStorage.getItem(STORAGE_KEY);
+                if (lastClaim) {
+                    const timePassed = Date.now() - parseInt(lastClaim);
+                    if (timePassed < COOLDOWN_TIME) {
+                        showError("❌ Bạn phải chờ 24 giờ để claim lần tiếp theo!");
+                        return;
+                    }
+                }
+
+                // Disable button
+                const claimBtn = document.getElementById("claimBtn");
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<span class="loading"></span> Đang xử lý...';
+
+                updateStatus("Đang xử lý...");
+
+                // Call transfer function (owner sends token to user)
+                const tx = await contract.transfer(userAddress, CLAIM_AMOUNT);
+
+                updateStatus("Đang đợi xác nhận...");
+                claimBtn.innerHTML = '<span class="loading"></span> Đang đợi xác nhận...';
+
+                const receipt = await tx.wait();
+
+                // Success
+                localStorage.setItem(STORAGE_KEY, Date.now().toString());
+
+                showSuccess("✅ Claim thành công! Nhận 0.5 OSS");
+                updateStatus(userAddress.slice(0, 6) + "..." + userAddress.slice(-4));
+                await updateBalance();
+
+                // Start cooldown
+                const timeRemaining = COOLDOWN_TIME;
+                disableClaim(timeRemaining);
+
+            } catch (error) {
+                console.error(error);
+
+                claimBtn.disabled = false;
+                claimBtn.innerHTML = "✨ NHẬN TOKEN (CLAIM)";
+
+                let errorMsg = "❌ Lỗi: ";
+                if (error.reason) {
+                    errorMsg += error.reason;
+                } else if (error.message) {
+                    errorMsg += error.message;
+                } else {
+                    errorMsg += "Xem console log";
+                }
+
+                showError(errorMsg);
+                updateStatus(userAddress.slice(0, 6) + "..." + userAddress.slice(-4));
+            }
+        }
+
+        // ============ INITIALIZATION ============
+
+        window.addEventListener("load", () => {
+            console.log("🚀 OSS Mining Frontend Loaded");
+            console.log("Contract:", CONTRACT_ADDRESS);
+            console.log("Network: Arbitrum Sepolia (" + ARBITRUM_SEPOLIA_CHAIN_ID + ")");
+        });
+    </script>
+</body>
+</html>
